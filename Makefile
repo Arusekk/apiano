@@ -1,4 +1,3 @@
-include ${HOME}/Makefile
 
 CXXFLAGS:=${CXXFLAGS} -pthread -g
 
