@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <list>
 #include <algorithm>
+#include <signal.h>
 #include <sys/wait.h>
 #include "conio.h"
 
