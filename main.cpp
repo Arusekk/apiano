@@ -161,7 +161,7 @@ const char* instrums[]={
   "drums"
 };
 
-int instr, dura=4, menupoz;
+int instr, dura=4, menupoz, velocity=0x7f;
 
 extern std::list<std::pair<int,int> > pids;
 
@@ -287,6 +287,8 @@ void redraw() {
     printf("Instrument: %s", instrums[instr]);
     CPos(top+2, lef+2);
     printf("Duration: %d", dura);
+    CPos(top+3, lef+2);
+    printf("Velocity: %d", velocity);
     CPos(top+1+menupoz, lef+1);
     printf("%c", 15);
   }
@@ -297,7 +299,7 @@ void redraw() {
   CPos(7,1);
 }
 
-extern void playsound(int);
+extern void playsound(int pitch, int velocity);
 
 void handler(int sig) {
   while (!pids.empty() && waitpid(pids.front().first, NULL, WNOHANG) != 0)
@@ -352,18 +354,20 @@ void interprt(char c) {
 	menupoz++;
 	break;
       case 'C':
-	(menupoz ? dura : instr)++;
+	(menupoz==1 ? dura : menupoz==2 ? velocity : instr)++;
 	break;
       case 'D':
-	(menupoz ? dura : instr)--;
+	(menupoz==1 ? dura : menupoz==2 ? velocity : instr)--;
 	break;
       default:
 	okcharz=69;
 	break;
     }
     instr&=127;
+	velocity&=127;
     dura&=7;
-    menupoz&=1;
+    menupoz += 3;
+	menupoz %= 3;
     if (!okcharz) {
       redraw();
       return;
@@ -394,7 +398,7 @@ void interprt(char c) {
       printf("%c", c);
       CPos(7,1);
       setcolor(15);
-      playsound(i-1);
+      playsound(i-1, velocity);
     }
 }
 

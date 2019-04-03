@@ -44,7 +44,7 @@ void WriteVarLen(FILE* outfile, unsigned long value) {
 #define WRITE 1
 std::list<std::pair<int,int> > pids;
 
-void playsound(int pitch) {
+void playsound(int pitch, int velocity) {
   int i;
   FILE* fp;
   pid_t child_pid;
@@ -75,9 +75,9 @@ void playsound(int pitch) {
 //     fprintf(fp, "%c", contents[1][i]);
   fputc(instr, fp);
   fputc('\0', fp);
-  fprintf(fp, "\x90%c\x60", pitch+48);
+  fprintf(fp, "\x90%c%c", pitch+48, velocity);
   WriteVarLen(fp, 8<<dura);
-  fprintf(fp, "\x80%c\x60", pitch+48);
+  fprintf(fp, "\x80%c%c", pitch+48, velocity);
   fwrite("\0\xff\x2f\0", 1, 4, fp);
   fclose(fp);
   pids.push_back(std::make_pair(child_pid, pitch));
