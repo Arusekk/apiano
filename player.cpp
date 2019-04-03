@@ -61,7 +61,7 @@ void playsound(int pitch, int velocity) {
       dup2(2, 1);
       close(fd[WRITE]);
 
-      execl("/usr/bin/timidity", "/usr/bin/timidity", "-", NULL);
+      execl("/usr/bin/timidity", "/usr/bin/timidity", "-id", "-", NULL);
       exit(0);
   }
   close(fd[READ]);
