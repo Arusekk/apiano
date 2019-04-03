@@ -16,14 +16,14 @@ const char* contents[]={
   "\x00\xff\x58\x04\x04\x02\x18\x08\x00\xc0" // 8+2
 };
 
-int calc(register unsigned long value) {
-  register int charz=1;
+int calc(unsigned long value) {
+  int charz=1;
   while (value>>=7) charz++;
   return charz;
 }
 
-void WriteVarLen(FILE* outfile, register unsigned long value) {
-  register unsigned long buffer;
+void WriteVarLen(FILE* outfile, unsigned long value) {
+  unsigned long buffer;
   buffer = value & 0x7F;
 
   while (value>>=7) {
