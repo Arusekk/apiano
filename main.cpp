@@ -5,31 +5,32 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include "conio.h"
+#include "player.h"
 
 #ifdef USECHARZ
 #define caseprintf printf
 #else
-void caseprintf(const char* x) {
+static void caseprintf(const char* x) {
   for (int i=0;x[i];i++) printf(" ");
 }
 #endif
 
-void CPos(int i, int j) {
+static void CPos(int i, int j) {
     COORD cPos;
     cPos.X = j;
     cPos.Y = i;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), cPos);
 }
-void setcolor(unsigned short int color) {
+static void setcolor(unsigned short int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
 
 bool exitflag, menupending;
 
-const char* keyconf="\tq2w3er5t6y7ui9o0p[=]azsxcfvgbnjmk,l./'";
+static const char* keyconf="\tq2w3er5t6y7ui9o0p[=]azsxcfvgbnjmk,l./'";
 
-const char* instrums[]={
+static const char* instrums[]={
   "acoustic grand",
   "bright acoustic",
   "electric grand",
@@ -163,9 +164,13 @@ const char* instrums[]={
 
 int instr, dura=4, menupoz, velocity=0x7f;
 
-extern std::list<std::pair<int,int> > pids;
+static std::list<std::pair<int,int> > pids;
 
-void redraw() {
+void addpid(int child_pid, int pitch) {
+  pids.push_back(std::make_pair(child_pid, pitch));
+}
+
+static void redraw() {
 #ifdef __WIN32
   system("cls");
 #else
