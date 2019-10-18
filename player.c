@@ -9,8 +9,6 @@
 #include <limits.h>
 #include "player.h"
 
-extern void Sleep(int);
-extern int instr, dura;
 
 static char contents[][36]={
   "MThd"              // MIDI track header chunk
@@ -33,8 +31,10 @@ static char contents[][36]={
   "\x00\xff\x2f\x00"  // track end
 };
 
-uint32_t *const trk_len = (uint32_t*)(contents[0] + 18);
-uint8_t  *const trk_ins = contents[0] + 32;
+static uint32_t *const trk_len = (uint32_t*)(contents[0] + 18);
+static uint8_t  *const trk_ins = contents[0] + 32;
+static FILE *soundfp = NULL;
+
 
 static int calc(unsigned long value) {
   int charz=1;
@@ -62,8 +62,6 @@ static void WriteVarLen(unsigned long value, FILE* outfile) {
 
 #define READ  0
 #define WRITE 1
-
-static FILE *soundfp = NULL;
 
 static void openfile(int length, int pitch) {
   int i;

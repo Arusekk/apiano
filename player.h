@@ -7,6 +7,7 @@ extern "C" {
 
 void addpid(int pid, int );
 void playsound(int pitch, int velocity);
+extern int instr, dura;
 
 #ifdef __cplusplus
 }

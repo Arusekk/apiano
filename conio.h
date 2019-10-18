@@ -1,19 +1,20 @@
 #ifndef __WIN32
-#include <queue>
-#include <cstdarg>
-#include <cstring>
+#include <errno.h>
+#include <poll.h>
+#include <stdarg.h>
+#include <string.h>
+#include <time.h>
 #include <termios.h>
 #include <unistd.h>
-#include <thread>
 #define STD_OUTPUT_HANDLE stdout
 #define GetStdHandle(x) x
 #define kbhit _kbhit
 #define getch _getch
-struct termios termios_saved_attributes;
-void termios_reset_input_mode() {
+static struct termios termios_saved_attributes;
+static void termios_reset_input_mode() {
   tcsetattr(STDIN_FILENO, TCSANOW, &termios_saved_attributes);
 }
-void termios_set_input_mode() {
+static void termios_set_input_mode() {
   struct termios tattr;
   if (!isatty(STDIN_FILENO)) {
     fprintf(stderr, "Not a terminal.\n");
@@ -28,7 +29,7 @@ void termios_set_input_mode() {
   tattr.c_cc[VTIME] = 0;
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &tattr);
 }
-void Sleep(int ms) {
+static void Sleep(int ms) {
   fflush(stdout);
   timespec tim, tim2;
   tim.tv_sec = ms/1000;
@@ -37,53 +38,38 @@ void Sleep(int ms) {
   if ((err=nanosleep(&tim, &tim2))<0)
     nanosleep(&tim2, NULL);
 }
-std::queue<char> _gotch;
-bool _life_pending=true;
-class _unimportant {
-public:
-  _unimportant() {
-    _life_pending=true;
-  }
-  ~_unimportant() {
-    _life_pending=false;
-  }
-} _not_really_important;
-void _real_init_hit() {
-  while (_life_pending) {
-    termios_set_input_mode();
-    _gotch.push(getchar());
-    termios_reset_input_mode();
-  }
-}
-void _init_hit() {
+static void _init_hit() {
   static bool isinited=false;
   if (isinited) return;
   isinited=true;
-  std::thread thr(_real_init_hit);
-  thr.detach();
+  termios_set_input_mode();
 }
-bool _kbhit() {
+static bool _kbhit() {
+  static struct pollfd _fds = {
+    .fd = STDIN_FILENO,
+    .events = POLLIN
+  };
   _init_hit();
-  return !_gotch.empty();
+  poll(&_fds, 1, 0);
+  return _fds.revents & POLLIN;
 }
-char _getch() {
-  while (!kbhit()) Sleep(1);
-  char r=_gotch.front();
-  _gotch.pop();
-  return r;
+static char _getch() {
+  char c;
+  _init_hit();
+  while (read(STDIN_FILENO, &c, 1) != 1 && errno == EINTR);
+  return c;
 }
 struct COORD {
   int X;
   int Y;
 };
-void SetConsoleCursorPosition(FILE*f, COORD p) {
+static void SetConsoleCursorPosition(FILE*f, COORD p) {
   fprintf(f, "\x1b[%d;%dH", p.Y+1, p.X+1);
   fflush(f);
 }
-const int COLOR_WIN_TO_LNX[]={0,4,2,6,1,5,3,7};
-const int COLOR_LNX_TO_WIN[]={0,4,2,6,1,5,3,7};
-void SetConsoleTextAttribute(FILE*f, short color) {
-  fflush(f);
+static void SetConsoleTextAttribute(FILE*f, short color) {
+  static const int COLOR_WIN_TO_LNX[]={0,4,2,6,1,5,3,7};
+  static const int COLOR_LNX_TO_WIN[]={0,4,2,6,1,5,3,7};
   int fg=color%16;
   int bg=color/16;
   int xdfg=3+(fg&8)/4*3;
@@ -96,8 +82,9 @@ void SetConsoleTextAttribute(FILE*f, short color) {
 	  xdfg = 3;
   }
   fprintf(f, "\x1b[%d%d;%d%dm", xdbg, bg, xdfg, fg);
+  fflush(f);
 }
-const char* CP852_2_UTF[]={"\xc3\x87",
+static const char* CP852_2_UTF[]={"\xc3\x87",
 "\xc3\xbc",
 "\xc3\xa9",
 "\xc3\xa2",
@@ -225,9 +212,7 @@ const char* CP852_2_UTF[]={"\xc3\x87",
 "\xc5\x99",
 "\xe2\x96\xa0",
 "\xc2\xa0"};
-const char* spec219="\x1b[7m \x1b[27m";
-char spec178[14];
-const char* con2utf[]={
+static const char* con2utf[]={
 "\0",
 "\xe2\x98\xba",
 "\xe2\x98\xbb",
@@ -261,7 +246,9 @@ const char* con2utf[]={
 "\xe2\x96\xb2",
 "\xe2\x96\xbc"};
 typedef unsigned char uchar;
-const char* cp2utf(char& x) {
+static const char* cp2utf(char& x) {
+  static const char* spec219="\x1b[7m \x1b[27m";
+  static char spec178[14];
   uchar us=x;
   if (us<32) return con2utf[us];
   if (us<128) return &x;
