@@ -70,7 +70,7 @@ void playsound(int pitch, int velocity) {
     dup2(fd[READ], 0);
     close(fd[READ]);
 
-    execl("/usr/bin/pacat", "pacat", NULL);
+    execl("/usr/bin/pacat", "pacat", "-nAPiano", NULL);
     exit(0);
   }
   close(fd[READ]);
