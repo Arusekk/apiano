@@ -1,3 +1,4 @@
+#include <netinet/in.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,12 +6,13 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include "player.h"
 
 extern void Sleep(int);
 extern int instr, dura;
 
-static const char* contents[]={
+static char contents[][36]={
   "MThd"              // MIDI track header chunk
   "\x00\x00\x00\x06"  // 6 bytes in MThd
   "\x00\x00"          // ver 0 (single track)
@@ -18,18 +20,21 @@ static const char* contents[]={
   "\x00\x60"          // 96 ticks per 1/4
 
   "MTrk"              // MIDI track chunk
-  "",                 // 12+4
+  "\x7f\xff\xff\xff"  // bytes in MTrk (adjusted later)
 
-  "\x00\xff\x58\x04"  // time signature
+  "\x00\xff\x58\x04"  // time signature event
   "\x04\x02"          // 4/(1<<2) = 4/4
   "\x18"              // 24 clocks / metronome tick
   "\x08"              // 8 notated 1/32 per MIDI 1/4
 
-  "\x00\xc0"          // select patch (instrument)
-  "",                 // 8+2
+  "\x00\xc0"          // select patch (instrument) event
+  "\x00",             // acoustic grand by default (adjusted later)
 
   "\x00\xff\x2f\x00"  // track end
 };
+
+uint32_t *const trk_len = (uint32_t*)(contents[0] + 18);
+uint8_t  *const trk_ins = contents[0] + 32;
 
 static int calc(unsigned long value) {
   int charz=1;
@@ -83,28 +88,26 @@ static void openfile(int length, int pitch) {
       close(fd[WRITE]);
 
       execl("/usr/bin/timidity", "timidity", "-idqq", "-o-", "-Or1sl", "-", NULL);
-      exit(0);
+      exit(1);
     }
     close(fd[WRITE]);
     dup2(fd[READ], 0);
     close(fd[READ]);
 
     execl("/usr/bin/pacat", "pacat", "-nAPiano", NULL);
-    exit(0);
+    exit(1);
   }
   close(fd[READ]);
-  soundfp = fdopen(fd[WRITE], "w");
-  fwrite(*contents, 1, 19, soundfp);
-  durax = htonl(length);
-  
-  fwrite(&durax, 1, 4, soundfp);
-  fwrite(contents[1], 1, 10, soundfp);
-  fputc(instr, soundfp);
+  soundfp = fdopen(fd[WRITE], "wb");
+
+  *trk_len = htonl(length + 15);
+  *trk_ins = instr;
+  fwrite(*contents, 1, 33, soundfp);
   addpid(child_pid, pitch);
 }
 
 static void closefile() {
-  fwrite(contents[2], 1, 4, soundfp);
+  fwrite(contents[1], 1, 4, soundfp);
   fclose(soundfp);
   soundfp = NULL;
 }
