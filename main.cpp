@@ -167,7 +167,7 @@ static void redraw() {
 extern void playsound(int pitch, int velocity);
 
 static void handler(int sig) {
-  while (!pids.empty() && waitpid(pids.front().first, NULL, WNOHANG) > 0) {
+  while (!pids.empty() && (waitpid(pids.front().first, NULL, WNOHANG) > 0 || errno == ECHILD)) {
     int i;
     i = pids.front().second+1;
     pids.pop_front();
