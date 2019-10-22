@@ -63,7 +63,7 @@ static void redraw() {
     CPos(2, i*2-1);
     caseprintf("|");
     setcolor(9 | (col*240));
-    for (std::deque<std::pair<int,int> >::iterator it=pids.begin(); it!=pids.end(); it++)
+    for (std::deque<std::pair<int,int> >::iterator it=pids.begin(); it!=pids.end(); ++it)
       if (it->second == i-1) {
         setcolor(144 | (col*15));
         break;
