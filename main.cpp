@@ -47,7 +47,7 @@ static void redraw() {
 #else
   fprintf(stderr, "\x1b[H\x1b[J");
 #endif
-  int i, col;
+  int i;
   // keyboard:
   //  _ _ _ _ _ _ _ _ _ _ _ _
   // | |2| |4| | |7| |9|1|1|1|
@@ -55,6 +55,7 @@ static void redraw() {
   // |  |   |  |  |   |   |  |
   // |__|___|__|__|___|___|__|
   for (i=1; i<37; i++) {
+    int col;
     setcolor(15);
     col = colmap[i%12];
     CPos(1, i*2);
@@ -163,8 +164,6 @@ static void redraw() {
     printf(", %c to toggle, %c to select", 29, 18); //, 17, 16, 30, 31);
   CPos(7,1);
 }
-
-extern void playsound(int pitch, int velocity);
 
 static void handler(int sig) {
   while (!pids.empty() && (waitpid(pids.front().first, NULL, WNOHANG) > 0 || errno == ECHILD)) {

@@ -1,4 +1,10 @@
-#ifndef __WIN32
+#ifdef __WIN32
+
+#include <conio.h>
+#include <windows.h>
+
+#else // __WIN32
+
 #include <errno.h>
 #include <poll.h>
 #include <stdarg.h>
@@ -63,13 +69,13 @@ struct COORD {
   int X;
   int Y;
 };
+typedef unsigned char uchar;
 static void SetConsoleCursorPosition(FILE*f, COORD p) {
   fprintf(f, "\x1b[%d;%dH", p.Y+1, p.X+1);
   fflush(f);
 }
 static void SetConsoleTextAttribute(FILE*f, short color) {
-  static const int COLOR_WIN_TO_LNX[]={0,4,2,6,1,5,3,7};
-  static const int COLOR_LNX_TO_WIN[]={0,4,2,6,1,5,3,7};
+  static const uchar COLOR_WIN_TO_LNX[]={0,4,2,6,1,5,3,7};
   int fg=color%16;
   int bg=color/16;
   int xdfg=3+(fg&8)/4*3;
@@ -245,14 +251,12 @@ static const char* con2utf[]={
 "\xe2\x86\x94",
 "\xe2\x96\xb2",
 "\xe2\x96\xbc"};
-typedef unsigned char uchar;
 static const char* cp2utf(char& x) {
-  static const char* spec219="\x1b[7m \x1b[27m";
   static char spec178[14];
   uchar us=x;
   if (us<32) return con2utf[us];
   if (us<128) return &x;
-  if (us==219) return spec219;
+  if (us==219) return "\x1b[7m \x1b[27m";
   if (!spec178[0])
     sprintf(spec178,"\x1b[7m%s\x1b[27m",CP852_2_UTF[176-128]);
   if (us==178) return spec178;
@@ -273,9 +277,4 @@ int printf(const char* fmt, ...) {
   fflush(stdout);
   return 1;
 }
-#else // __WIN32
-
-#include <conio.h>
-#include <windows.h>
-
 #endif // __WIN32
