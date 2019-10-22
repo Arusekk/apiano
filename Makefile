@@ -1,4 +1,5 @@
 OBJECTS := main.o player.o
+CXXFLAGS += -std=c++11
 
 all: apiano
 	./$<

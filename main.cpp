@@ -13,7 +13,7 @@
 #define caseprintf printf
 #else
 static void caseprintf(const char* x) {
-  printf("%*s", strlen(x), "");
+  printf("%*s", (int)strlen(x), "");
 }
 #endif
 

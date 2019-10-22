@@ -83,7 +83,7 @@ static void SetConsoleTextAttribute(FILE*f, short color) {
   bg=COLOR_WIN_TO_LNX[bg&7];
   fg=COLOR_WIN_TO_LNX[fg&7];
   if (color & 8192) return; // 0x2000 flag makes no change happen
-  if (xdbg != 4 || xdfg != 3 && strcmp(getenv("TERM"), "linux")==0) {
+  if ((xdbg != 4 || xdfg != 3) && !strcmp(getenv("TERM"), "linux")) {
 	  xdbg = 4;
 	  xdfg = 3;
   }
