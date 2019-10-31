@@ -114,10 +114,10 @@ void playsound(int pitch, int velocity) {
   if (soundfp == NULL)
     openfile(7+calc(8<<dura), pitch);
   fputc('\0', soundfp);
-  fprintf(soundfp, "\x90%c%c", pitch+48, velocity);
+  fprintf(soundfp, "\x90%c%c", pitch + octave*12, velocity);
   fflush(soundfp);
   WriteVarLen(8<<dura, soundfp);
-  fprintf(soundfp, "\x80%c%c", pitch+48, velocity);
+  fprintf(soundfp, "\x80%c%c", pitch + octave*12, velocity);
   closefile();
 }
 

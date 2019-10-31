@@ -31,7 +31,7 @@ static void setcolor(unsigned short int color) {
 static bool exitflag, menupending;
 
 static const char* keyconf="\tq2w3er5t6y7ui9o0p[=]azsxcfvgbnjmk,l./'";
-int instr, dura=4, menupoz, velocity=0x7f;
+int instr, dura=4, octave=4, menupoz, velocity=0x7f;
 
 static std::deque<std::pair<int,int> > pids;
 
@@ -126,7 +126,7 @@ static void redraw() {
     }
   }
 
-  const int top=5, bot=10, lef=5, rig=45;
+  const int top=5, bot=11, lef=5, rig=45;
   if (menupending) {
     CPos(top, lef+1);
     for (i=lef+1; i<rig; i++)
@@ -155,10 +155,12 @@ static void redraw() {
     printf("Duration: %d", dura);
     CPos(top+3, lef+2);
     printf("Velocity: %d", velocity);
+    CPos(top+4, lef+2);
+    printf("Octave: %d", octave);
     CPos(top+1+menupoz, lef+1);
     printf("%c", 15);
   }
-  CPos(11,1);
+  CPos(12,1);
   printf("Press [TAB] to exit, [RET] to toggle menu");
   if (menupending)
     printf(", %c to toggle, %c to select", 29, 18); //, 17, 16, 30, 31);
@@ -224,20 +226,20 @@ static void interprt(char c) {
         menupoz++;
         break;
       case 'C':
-        (menupoz==1 ? dura : menupoz==2 ? velocity : instr)++;
+        (menupoz==1 ? dura : menupoz==2 ? velocity : menupoz==3 ? octave : instr)++;
         break;
       case 'D':
-        (menupoz==1 ? dura : menupoz==2 ? velocity : instr)--;
+        (menupoz==1 ? dura : menupoz==2 ? velocity : menupoz==3 ? octave : instr)--;
         break;
       default:
         okcharz=69;
         break;
     }
     instr&=127;
-	velocity&=127;
+    velocity&=127;
     dura&=7;
-    menupoz += 3;
-	menupoz %= 3;
+    menupoz += 4;
+    menupoz %= 4;
     if (!okcharz) {
       redraw();
       return;
