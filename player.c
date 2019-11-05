@@ -79,21 +79,21 @@ static void openfile(int length, int pitch) {
     close(fd[READ]);
     pipe(fd);
 
-    if ((child_pid = fork()) == -1) exit(1);
+    if ((child_pid = fork()) == -1) _exit(1);
     if (child_pid == 0) {
       close(fd[READ]);
       dup2(fd[WRITE], 1);
       close(fd[WRITE]);
 
-      execl("/usr/bin/timidity", "timidity", "-idqq", "-o-", "-Or1sl", "-", NULL);
-      exit(1);
+      execlp("timidity", "timidity", "-idqq", "-o-", "-Or1sl", "-", NULL);
+      _exit(1);
     }
     close(fd[WRITE]);
     dup2(fd[READ], 0);
     close(fd[READ]);
 
-    execl("/usr/bin/pacat", "pacat", "-nAPiano", NULL);
-    exit(1);
+    execlp("pacat", "pacat", "-nAPiano", NULL);
+    _exit(1);
   }
   close(fd[READ]);
   soundfp = fdopen(fd[WRITE], "wb");
