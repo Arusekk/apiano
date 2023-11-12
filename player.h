@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-void addpid(int pid, int );
+void addpid(int pid, int pitch);
 void playsound(int pitch, int velocity);
+void closefile(void);
 extern int instr, dura, octave;
 
 #ifdef __cplusplus

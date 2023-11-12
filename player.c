@@ -36,12 +36,6 @@ static uint8_t  *const trk_ins = contents[0] + 32;
 static FILE *soundfp = NULL;
 
 
-static int calc(unsigned long value) {
-  int charz=1;
-  while (value>>=7) charz++;
-  return charz;
-}
-
 static void WriteVarLen(unsigned long value, FILE* outfile) {
   unsigned long buffer;
   buffer = value & 0x7F;
@@ -63,9 +57,10 @@ static void WriteVarLen(unsigned long value, FILE* outfile) {
 #define READ  0
 #define WRITE 1
 
-static void openfile(int length, int pitch) {
+static pid_t child_pid;
+
+static void openfile(void) {
   int i;
-  pid_t child_pid;
   int fd[2];
   int durax;
 
@@ -98,26 +93,29 @@ static void openfile(int length, int pitch) {
   close(fd[READ]);
   soundfp = fdopen(fd[WRITE], "wb");
 
-  *trk_len = htonl(length + 15);
+  //*trk_len = htonl(length + 15);
   *trk_ins = instr;
   fwrite(*contents, 1, 33, soundfp);
-  addpid(child_pid, pitch);
 }
 
-static void closefile() {
-  fwrite(contents[1], 1, 4, soundfp);
-  fclose(soundfp);
-  soundfp = NULL;
+void closefile(void) {
+  if (soundfp) {
+    fwrite(contents[1], 1, 4, soundfp);
+    fclose(soundfp);
+    soundfp = NULL;
+  }
 }
 
 void playsound(int pitch, int velocity) {
   if (soundfp == NULL)
-    openfile(7+calc(8<<dura), pitch);
+    openfile();
+  addpid(child_pid, pitch);
   fputc('\0', soundfp);
   fprintf(soundfp, "\x90%c%c", pitch + octave*12, velocity);
   fflush(soundfp);
   WriteVarLen(8<<dura, soundfp);
   fprintf(soundfp, "\x80%c%c", pitch + octave*12, velocity);
   closefile();
+  openfile();
 }
 

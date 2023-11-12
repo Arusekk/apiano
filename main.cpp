@@ -168,15 +168,23 @@ static void redraw() {
 }
 
 static void handler(int sig) {
-  while (!pids.empty() && (waitpid(pids.front().first, NULL, WNOHANG) > 0 || errno == ECHILD)) {
+  pid_t pid;
+  while (!pids.empty() && (pid = waitpid(-1, NULL, WNOHANG)) > 0) {
     int i;
-    i = pids.front().second+1;
-    pids.pop_front();
-    CPos(2, i*2);
-    setcolor(9 | (colmap[i%12]*240));
-    printf("%c", keyconf[i]);
-    setcolor(15);
-    CPos(7,1);
+    for (std::deque<std::pair<int,int> >::iterator it=pids.begin(); it!=pids.end(); ++it) {
+      if (it->first == pid) {
+        i = it->second+1;
+        it->first = -1;
+        it->second = -1;
+        CPos(2, i*2);
+        setcolor(9 | (colmap[i%12]*240));
+        printf("%c", keyconf[i]);
+        setcolor(15);
+        CPos(7,1);
+     }
+    }
+    while (!pids.empty() && pids.front().first == -1)
+      pids.pop_front();
   }
 }
 
@@ -262,7 +270,7 @@ static void interprt(char c) {
 }
 
 int main() {
-  struct sigaction act;
+  static struct sigaction act;
   //act.sa_flags = SA_NOCLDSTOP;
   act.sa_handler = handler;
   sigaction(SIGCHLD,&act,NULL);
@@ -273,6 +281,7 @@ int main() {
   redraw();
   while (!exitflag)
     interprt(getch());
+  closefile();
 #ifndef __WIN32
   fprintf(stderr, "\x1b[H\x1b[J");
 #endif
